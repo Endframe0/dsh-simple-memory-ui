@@ -103,6 +103,8 @@ node node_modules\@deepseek-ai\dsh\lib\bin.js web
 
 ### 官方桌面版（Electron App）
 
+建议把仓库地址直接给AI让AI安装
+
 桌面版有独立 profile（`~/.dsh/profiles/desktop`），**不读 web profile**：装进 web profile
 不会让桌面版出现「记忆」面板（`AGENTS.md`、`skills/` 由 DSH 内建机制读取，与插件装在哪一侧无关）。
 
