@@ -80,36 +80,9 @@
 
 前置：已有可用的 DSH（`dsh` 命令）与 Node ≥ 20。以下命令都在 **DSH 安装目录**下执行。
 
-### 网络安装（推荐）
-
-`dsh plugin add` 内部就是 `pnpm add`，pnpm 支持的写法都能直接用：
-
 ```sh
 # 从 GitHub 安装（pnpm 的 github: 协议）
 dsh plugin --profile web add github:Endframe0/dsh-simple-memory-ui
-
-# 固定版本（按 tag）——推荐生产环境这么装
-dsh plugin --profile web add github:Endframe0/dsh-simple-memory-ui#v1.4.0
-
-# 也可以直接装 Release 附件或本地 tgz
-dsh plugin --profile web add https://github.com/Endframe0/dsh-simple-memory-ui/releases/download/v1.4.0/dsh-simple-memory-ui-1.4.0.tgz
-dsh plugin --profile web add D:\path\to\dsh-simple-memory-ui-1.4.0.tgz
-```
-
-> ⚠️ **别写成 `@Endframe0/dsh-simple-memory-ui`**：那是 *npm scope* 写法，本包没有发布到 npm，
-> 那样会 404。GitHub 源必须用 `github:<owner>/<repo>` 或仓库/Release 的 URL。
->
-> 若报 `ERR_PNPM_GIT_RESOLVE_FAILED`：`github:` 写法需要 `git ls-remote github.com`，网络不通时
-> 先解决可达性（例如给 git 单独配代理，不影响 npm registry：
-> `git config --global http.https://github.com.proxy http://127.0.0.1:7890`）。
-
-### 本地开发安装（改源码即时生效）
-
-```sh
-# 链接（junction/符号链接，改源码刷新页面即生效；Windows 建议用 link:）
-dsh plugin --profile web add link:D:\deepseekwork\dsh-simple-memory-ui
-# 或实拷贝
-dsh plugin --profile web add file:D:\deepseekwork\dsh-simple-memory-ui
 ```
 
 ### 装完自检并重启
@@ -130,43 +103,18 @@ node node_modules\@deepseek-ai\dsh\lib\bin.js web
 
 ### 官方桌面版（Electron App）
 
-桌面版**不读 web profile**：它有自己的 profile 目录 `~/.dsh/profiles/desktop`，
-插件库、`package.json`、`cordis.patch.yml` 与 web 端完全独立。
-把本包装进 web profile **不会**让桌面版出现「记忆」面板 ——
-`AGENTS.md`、`skills/` 之所以看起来还在，是因为它们由 DSH 内建机制读取，
-和插件装在哪一侧无关。
+桌面版有独立 profile（`~/.dsh/profiles/desktop`），**不读 web profile**：装进 web profile
+不会让桌面版出现「记忆」面板（`AGENTS.md`、`skills/` 由 DSH 内建机制读取，与插件装在哪一侧无关）。
 
-两条安装途径（选一）：
+**应用内安装**：侧边栏「插件」页 → **添加插件** → 填 `github:Endframe0/dsh-simple-memory-ui`
+（GitHub 仓库地址 `https://github.com/Endframe0/dsh-simple-memory-ui`、本地目录路径同样接受）。
+由 Electron shell 代理安装，装完自动重新组合，通常无需重启。
 
-**A. 应用内（推荐）** —— 侧边栏「插件」页 → **添加插件** → 在输入框里填下面任一种
-（对话框本身就支持"包名 / GitHub 仓库地址 / 本地目录路径"三类输入）：
-
-| 填什么 | 例子 | 说明 |
-|---|---|---|
-| GitHub 仓库地址 | `https://github.com/Endframe0/dsh-simple-memory-ui` | 网络安装，推荐 |
-| pnpm 的 git 写法 | `github:Endframe0/dsh-simple-memory-ui`（可加 `#v1.4.0` 固定版本） | 等价，写起来更短 |
-| 本地目录路径 | `D:\deepseekwork\dsh-simple-memory-ui` | 本地开发，改源码刷新即生效 |
-| npm 包名 | —— | 本包**未发布到 npm**，暂不适用 |
-
-> ⚠️ 对话框里的**「安装源」（默认 / 中国大陆镜像源）只作用于 npm registry**。
-> **GitHub 地址和 `.tgz` 直链不经过安装源** —— 需要本机能直接访问 GitHub 或已配好代理。
-> 若提示「无法访问 GitHub」，先确认代理可用，或改用 Release 附件 / 本地目录安装。
-
-桌面版的包管理由 Electron shell 代理，装完会立即重新组合，通常无需重启。
-
-**B. 命令行** —— 必须用桌面版自带的 CLI；普通 `dsh plugin --profile desktop` 会被
-拒绝（`profile "desktop" is managed exclusively by the Electron application`）：
-
-```powershell
-$env:ELECTRON_RUN_AS_NODE = '1'
-$exe = 'D:\DSH\DeepSeek Harness.exe'                 # 桌面版安装位置
-& $exe --expose-internals "$env:APPDATA\..\..\..\DSH\resources\app.asar\dsh\node_modules\@deepseek-ai\dsh-desktop-host\lib\cli.js" `
-  plugin --profile desktop add github:Endframe0/dsh-simple-memory-ui
-```
-
-装好后确认 `~/.dsh/profiles/desktop/package.json` 同时出现依赖与
-`dsh.profile.bundles` 条目（CLI 有时只装包、不登记，见下方警告），
-再验证 `<桌面版端口>/dswm/api/ping`。
+> 「安装源」（默认 / 中国大陆镜像源）**只作用于 npm registry**；GitHub 地址与 `.tgz` 直链不走安装源，
+> 需要本机能直接访问 GitHub（不通就先配代理）。
+>
+> 命令行安装要用桌面版自带 CLI：普通 `dsh plugin --profile desktop` 会被拒绝
+> （`profile "desktop" is managed exclusively by the Electron application`）。
 
 > 版本：本包同时适配 **0.1.5**（web profile）与 **0.2.x**（桌面版）。
 > 0.2 的 session format v4 只接受 *producer-owned* 的消息 source
@@ -175,7 +123,7 @@ $exe = 'D:\DSH\DeepSeek Harness.exe'                 # 桌面版安装位置
 > 面板本身注册在 `sidebar.panellist`（侧边栏入口）+ 布局的 `main` keyed slot
 > （整屏面板）——这两个 slot 在 0.1.5 与 0.2 上同名同形状，所以一份客户端代码两边通用。
 
-> **⚠️ 第 2 步别跳过。** `dsh plugin add` 首次安装时**有时只装包、不把插件登记进
+> **⚠️ 自检别跳过。** `dsh plugin add` 首次安装时**有时只装包、不把插件登记进
 > `dsh.profile.bundles`**。后果是包躺在 `node_modules` 里、**没有任何报错**、服务照常启动，
 > 但插件根本没被装配 —— 功能全部不存在。自检脚本会直接指出并修好。
 > 临时替代：**再执行一次同一条 `add`**（提示 `Already up to date` 时会补登记）。
