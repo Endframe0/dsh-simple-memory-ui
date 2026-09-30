@@ -1,0 +1,61 @@
+{
+  "name": "dsh-simple-memory-ui",
+  "version": "1.4.0",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "DSWM (dsh-simple-wiki-memory) + Web GUI 面板：侧边栏「记忆」入口打开全屏面板，管理 reference/pending 记忆条目（查看、编辑正文与索引行、新建、确认晋升、删除/归档），落盘自动同步 AGENTS.md 索引、写 memory-log 并 git commit。兼容 dsh 0.1.5 与 0.2（含官方桌面版 desktop profile）。",
+  "license": "MIT",
+  "author": {
+    "name": "Endframe",
+    "email": "endframe@qq.com"
+  },
+  "main": "lib/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
+    }
+  },
+  "files": [
+    "lib",
+    "assets",
+    "skills",
+    "cordis.patch.yml",
+    "README.md",
+    "scripts/verify-install.mjs",
+    "scripts/test-core.mjs"
+  ],
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "memory",
+    "dswm",
+    "webui",
+    "persistent-memory"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/dsh-llm": "*"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-llm": {
+      "optional": true
+    }
+  }
+}

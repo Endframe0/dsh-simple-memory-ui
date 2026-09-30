@@ -1,0 +1,21 @@
+# dsh-simple-memory-ui bundle patch.
+# Applied automatically when the package is installed (package.json declares
+# `dsh.bundle.patch`). The node half runs in the host process and:
+#   - syncs the AGENTS.md six-rule skeleton into ~/.dsh/AGENTS.md (merge-only),
+#   - scaffolds ~/.dsh/workspace/{reference,pending,archive}/ + memory-log.md,
+#   - git-inits the workspace for backup/rollback,
+#   - auto-commits memory changes after turns,
+#   - reports pending (unconfirmed) memory at the start of a user turn,
+#   - serves the Web GUI panel API under /dswm/api/*.
+# The client half registers a 「记忆管理」 settings section in the Web client.
+#
+# `inject: [webServer]` is REQUIRED, not cosmetic: cordis's context proxy throws
+# on reading a service that is not declared in the fiber's inject list, so the
+# undeclared `ctx.webServer` access made apply() throw on its first statement
+# and took the whole plugin tree down — dsh web would not boot at all.
+# Declaring it orders the plugin after the server *and* makes the property
+# readable. Never drop this line.
+- insert:
+    - id: simple-memory-ui
+      name: dsh-simple-memory-ui
+      inject: [webServer]
