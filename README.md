@@ -1,9 +1,9 @@
 # dsh-simple-memory-ui
 
-**DSWM** —— DeepSeek Harness 的持久记忆插件：让 agent 跨会话记住你的偏好、约定、决策和踩过的坑。
+**DSWM** —— DeepSeek Harness 的持久记忆插件：让 AI 跨会话记住你的偏好、约定、决策和踩过的坑。
 
 做法是维护一份**索引 + 主题文件**的记忆库，并把索引注入 `~/.dsh/AGENTS.md`，
-于是**每个新会话开始时，agent 自动带上你已确认的记忆**。
+于是**每个新会话开始时，AI 自动带上你已确认的记忆**。
 
 本包 = 上游 [dsh-simple-wiki-memory](https://github.com/rainow/dsh-simple-wiki-memory) 的完整实现，
 外加一个可选的 Web GUI 面板（见文末）。
@@ -19,14 +19,14 @@
   不进索引、不参与检索                   进索引 → 新会话自动注入
 ```
 
-**六条维护规则**（首次运行写进 `AGENTS.md`，agent 每个会话都遵守）：
+**六条维护规则**（首次运行写进 `AGENTS.md`，AI 每个会话都遵守）：
 
 | # | 规则 | 要点 |
 |---|---|---|
 | 1 | 实时捕捉 | 产生即落盘，不静默丢弃；`/new` 或关页面都不丢 |
 | 2 | pending → reference | 未确认的进 `pending/`；你说「存档」才晋升并进索引 |
 | 3 | 无人值守会话 | 定时任务 / 后台 subagent 只写 `pending/`，不自动晋升 |
-| 4 | 定期整理 | 说「整理记忆」→ agent 出重组方案，**你确认后**才执行 |
+| 4 | 定期整理 | 说「整理记忆」→ AI 出重组方案，**你确认后**才执行 |
 | 5 | git 备份 | `workspace/` 是 git 仓库，每次晋升 / 归档 / 整理自动 commit |
 | 6 | 检索 | 先查索引，未命中**兜底扫目录**，绝不直接说"没有记忆" |
 
@@ -44,7 +44,7 @@
 └── .git/                            版本历史，可回滚
 ```
 
-索引条目格式（agent 靠它定位正文）：
+索引条目格式（AI 靠它定位正文）：
 
 ```markdown
 - [主题](~/.dsh/workspace/reference/主题.md) — 一句话摘要（YYYY-MM-DD）
@@ -52,7 +52,7 @@
 
 ## 提供的技能
 
-`skills/memory-query/` —— 教 agent 按「索引 → 单文件 → 兜底扫目录」的顺序检索记忆，
+`skills/memory-query/` —— 教 AI 按「索引 → 单文件 → 兜底扫目录」的顺序检索记忆，
 并在信息可能过时时用 `memory-log.md` 核对新鲜度。
 
 ## Web GUI 面板（可选）
@@ -80,16 +80,47 @@
 
 前置：已有可用的 DSH（`dsh` 命令）与 Node ≥ 20。以下命令都在 **DSH 安装目录**下执行。
 
-```sh
-# 1) 安装本地包（tgz 路径换成你放的位置）
-node_modules\.bin\dsh plugin --profile web add D:\dsh-simple-memory-ui-1.4.0.tgz
+### 网络安装（推荐）
 
-# 2) 自检（必须，见下方警告）
+`dsh plugin add` 内部就是 `pnpm add`，pnpm 支持的写法都能直接用：
+
+```sh
+# 从 GitHub 安装（pnpm 的 github: 协议）
+dsh plugin --profile web add github:Endframe0/dsh-simple-memory-ui
+
+# 固定版本（按 tag）——推荐生产环境这么装
+dsh plugin --profile web add github:Endframe0/dsh-simple-memory-ui#v1.4.0
+
+# 也可以直接装 Release 附件或本地 tgz
+dsh plugin --profile web add https://github.com/Endframe0/dsh-simple-memory-ui/releases/download/v1.4.0/dsh-simple-memory-ui-1.4.0.tgz
+dsh plugin --profile web add D:\path\to\dsh-simple-memory-ui-1.4.0.tgz
+```
+
+> ⚠️ **别写成 `@Endframe0/dsh-simple-memory-ui`**：那是 *npm scope* 写法，本包没有发布到 npm，
+> 那样会 404。GitHub 源必须用 `github:<owner>/<repo>` 或仓库/Release 的 URL。
+>
+> 若报 `ERR_PNPM_GIT_RESOLVE_FAILED`：`github:` 写法需要 `git ls-remote github.com`，网络不通时
+> 先解决可达性（例如给 git 单独配代理，不影响 npm registry：
+> `git config --global http.https://github.com.proxy http://127.0.0.1:7890`）。
+
+### 本地开发安装（改源码即时生效）
+
+```sh
+# 链接（junction/符号链接，改源码刷新页面即生效；Windows 建议用 link:）
+dsh plugin --profile web add link:D:\deepseekwork\dsh-simple-memory-ui
+# 或实拷贝
+dsh plugin --profile web add file:D:\deepseekwork\dsh-simple-memory-ui
+```
+
+### 装完自检并重启
+
+```sh
+# 自检（必须，见下方警告）
 node ~/.dsh/profiles/web/node_modules/dsh-simple-memory-ui/scripts/verify-install.mjs --fix
 ```
 
 ```powershell
-# 3) 重启 dsh web，然后刷新浏览器页面
+# 重启 dsh web，然后刷新浏览器页面
 Get-NetTCPConnection -LocalPort 3080 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
 node node_modules\@deepseek-ai\dsh\lib\bin.js web
 ```
@@ -101,15 +132,27 @@ node node_modules\@deepseek-ai\dsh\lib\bin.js web
 
 桌面版**不读 web profile**：它有自己的 profile 目录 `~/.dsh/profiles/desktop`，
 插件库、`package.json`、`cordis.patch.yml` 与 web 端完全独立。
-`/dsh-simple-memory-ui` 装进 web profile **不会**让桌面版出现「记忆管理」页 ——
+把本包装进 web profile **不会**让桌面版出现「记忆」面板 ——
 `AGENTS.md`、`skills/` 之所以看起来还在，是因为它们由 DSH 内建机制读取，
 和插件装在哪一侧无关。
 
 两条安装途径（选一）：
 
-**A. 应用内（推荐）** —— 侧边栏「插件」页 → 安装组合包 → 填本包的**绝对路径**
-（如 `D:\deepseekwork\dsh-simple-memory-ui`）。桌面版的包管理由 Electron shell 代理，
-装完会立即重新组合，通常无需重启。
+**A. 应用内（推荐）** —— 侧边栏「插件」页 → **添加插件** → 在输入框里填下面任一种
+（对话框本身就支持"包名 / GitHub 仓库地址 / 本地目录路径"三类输入）：
+
+| 填什么 | 例子 | 说明 |
+|---|---|---|
+| GitHub 仓库地址 | `https://github.com/Endframe0/dsh-simple-memory-ui` | 网络安装，推荐 |
+| pnpm 的 git 写法 | `github:Endframe0/dsh-simple-memory-ui`（可加 `#v1.4.0` 固定版本） | 等价，写起来更短 |
+| 本地目录路径 | `D:\deepseekwork\dsh-simple-memory-ui` | 本地开发，改源码刷新即生效 |
+| npm 包名 | —— | 本包**未发布到 npm**，暂不适用 |
+
+> ⚠️ 对话框里的**「安装源」（默认 / 中国大陆镜像源）只作用于 npm registry**。
+> **GitHub 地址和 `.tgz` 直链不经过安装源** —— 需要本机能直接访问 GitHub 或已配好代理。
+> 若提示「无法访问 GitHub」，先确认代理可用，或改用 Release 附件 / 本地目录安装。
+
+桌面版的包管理由 Electron shell 代理，装完会立即重新组合，通常无需重启。
 
 **B. 命令行** —— 必须用桌面版自带的 CLI；普通 `dsh plugin --profile desktop` 会被
 拒绝（`profile "desktop" is managed exclusively by the Electron application`）：
@@ -118,7 +161,7 @@ node node_modules\@deepseek-ai\dsh\lib\bin.js web
 $env:ELECTRON_RUN_AS_NODE = '1'
 $exe = 'D:\DSH\DeepSeek Harness.exe'                 # 桌面版安装位置
 & $exe --expose-internals "$env:APPDATA\..\..\..\DSH\resources\app.asar\dsh\node_modules\@deepseek-ai\dsh-desktop-host\lib\cli.js" `
-  plugin --profile desktop add D:\deepseekwork\dsh-simple-memory-ui
+  plugin --profile desktop add github:Endframe0/dsh-simple-memory-ui
 ```
 
 装好后确认 `~/.dsh/profiles/desktop/package.json` 同时出现依赖与
