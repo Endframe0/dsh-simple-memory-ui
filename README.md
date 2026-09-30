@@ -116,23 +116,6 @@ node node_modules\@deepseek-ai\dsh\lib\bin.js web
 > 命令行安装要用桌面版自带 CLI：普通 `dsh plugin --profile desktop` 会被拒绝
 > （`profile "desktop" is managed exclusively by the Electron application`）。
 
-> 版本：本包同时适配 **0.1.5**（web profile）与 **0.2.x**（桌面版）。
-> 0.2 的 session format v4 只接受 *producer-owned* 的消息 source
-> （`{kind:'plugin', plugin}` 是被拒的 v3 旧写法），1.2.0 起已改用
-> `{kind:'dsh-simple-memory-ui', form:'notice', summary}`。
-> 面板本身注册在 `sidebar.panellist`（侧边栏入口）+ 布局的 `main` keyed slot
-> （整屏面板）——这两个 slot 在 0.1.5 与 0.2 上同名同形状，所以一份客户端代码两边通用。
-
-> **⚠️ 自检别跳过。** `dsh plugin add` 首次安装时**有时只装包、不把插件登记进
-> `dsh.profile.bundles`**。后果是包躺在 `node_modules` 里、**没有任何报错**、服务照常启动，
-> 但插件根本没被装配 —— 功能全部不存在。自检脚本会直接指出并修好。
-> 临时替代：**再执行一次同一条 `add`**（提示 `Already up to date` 时会补登记）。
-
-> 另一个坑：profile 的 `package.json` **不能带 UTF-8 BOM**，dsh 用 `JSON.parse` 读它，
-> 带 BOM 会 `SyntaxError` 导致 `dsh web` 起不来。（PowerShell 5.1 的 `Set-Content -Encoding UTF8` 会写 BOM。）
-
-本包已含官方 `dsh-simple-wiki-memory` 的全部功能，**两者不要同时装**；
-从官方插件迁移无需转换（记忆库格式完全一致）。
 
 ### 升级
 
